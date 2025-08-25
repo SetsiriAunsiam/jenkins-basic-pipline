@@ -51,7 +51,7 @@ pipeline {
         stage('Approval') {
             steps {
                 input "Do you want to proceed with deployment?"
-                timeout(time: 2, unit: 'minutes') {
+                timeout(time: 2, unit: 'MINUTES') {
                     input message: 'Approve deployment?', ok: 'Deploy'
                 }
             }

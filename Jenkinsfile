@@ -2,6 +2,7 @@ pipeline {
     agent any
     parameters {
         booleanParam(name: 'RUN_DEPLOY', defaultValue: true, description: 'Should we deploy?')
+        choice(name: 'ENV', choices: ['dev', 'staging', 'prod'], description: 'Select the environment to deploy to')
     }
     stages {
         stage('Build') {
@@ -25,6 +26,22 @@ pipeline {
                 }
             }
         }
+        stage('simulate testing') {
+            parallel {
+                stage('Linux Tests') {
+                    steps {
+                        echo 'Running tests on Linux...'
+                        sh 'sleep 5'
+                    }
+                }
+                stage('Windows Tests') {
+                    steps {
+                        echo 'Running tests on Windows...'
+                        sh 'sleep 5'
+                    }
+                }
+            }
+        }
         stage('Test') {
             steps {
                 sh 'echo "All tests passed!" > results.txt'
@@ -34,6 +51,9 @@ pipeline {
         stage('Approval') {
             steps {
                 input "Do you want to proceed with deployment?"
+                timeout(time: 2, unit: 'minutes') {
+                    input message: 'Approve deployment?', ok: 'Deploy'
+                }
             }
         }
         stage('Deploy') {
@@ -42,15 +62,19 @@ pipeline {
             }
             steps {
                 echo 'Deploying application...'
+                echo "Deploying to environment: ${params.ENV}"
             }
         }
     }
     post {
         success {
-            echo 'Pipeline completed successfully 🎉'
+        echo '✅ Pipeline finished successfully!'
         }
         failure {
-            echo 'Pipeline failed ❌'
+            echo '❌ Pipeline failed. Check logs!'
+        }
+        always {
+            echo 'Pipeline completed (success or failure).'
         }
     }
 }
